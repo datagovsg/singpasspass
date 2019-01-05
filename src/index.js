@@ -1,7 +1,7 @@
 // see previous example for the things that are not commented
 
-const assert = require("assert");
-const Provider = require("oidc-provider");
+const assert = require('assert');
+const Provider = require('oidc-provider');
 
 // since dyno metadata is no longer available, we infer the app name from heroku remote we set
 // manually. This is not specific to oidc-provider, just an easy way of getting up and running
@@ -10,16 +10,16 @@ if (!process.env.HEROKU_APP_NAME && process.env.X_HEROKU_REMOTE) {
   process.env.HEROKU_APP_NAME = RegExp.$1;
 }
 
-assert(process.env.HEROKU_APP_NAME, "process.env.HEROKU_APP_NAME missing");
-assert(process.env.PORT, "process.env.PORT missing");
+assert(process.env.HEROKU_APP_NAME, 'process.env.HEROKU_APP_NAME missing');
+assert(process.env.PORT, 'process.env.PORT missing');
 assert(
   process.env.SECURE_KEY,
-  "process.env.SECURE_KEY missing, run `heroku addons:create securekey`"
+  'process.env.SECURE_KEY missing, run `heroku addons:create securekey`',
 );
 assert.equal(
-  process.env.SECURE_KEY.split(",").length,
+  process.env.SECURE_KEY.split(',').length,
   2,
-  "process.env.SECURE_KEY format invalid"
+  'process.env.SECURE_KEY format invalid',
 );
 
 const oidc = new Provider(
@@ -27,7 +27,7 @@ const oidc = new Provider(
   {
     // enable some of the feature, see the oidc-provider readme for more
     formats: {
-      AccessToken: "jwt"
+      AccessToken: 'jwt',
     },
     features: {
       claimsParameter: true,
@@ -37,26 +37,26 @@ const oidc = new Provider(
       registration: true,
       request: true,
       revocation: true,
-      sessionManagement: true
-    }
-  }
+      sessionManagement: true,
+    },
+  },
 );
 
-const keystore = require("./keystore.json");
+const keystore = require('./keystore.json');
 
 oidc
   .initialize({
     keystore,
     clients: [
       {
-        client_id: "foo",
-        client_secret: "bar",
-        redirect_uris: ["http://localhost:8080"]
-      }
-    ]
+        client_id: 'foo',
+        client_secret: 'bar',
+        redirect_uris: ['https://peaceful-yonath-ac1071.netlify.com'],
+      },
+    ],
   })
   .then(() => {
     oidc.proxy = true;
-    oidc.keys = process.env.SECURE_KEY.split(",");
+    oidc.keys = process.env.SECURE_KEY.split(',');
     oidc.listen(process.env.PORT);
   });
