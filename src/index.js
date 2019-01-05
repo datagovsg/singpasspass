@@ -1,3 +1,5 @@
+// see previous example for the things that are not commented
+
 const assert = require("assert");
 const Provider = require("oidc-provider");
 
@@ -20,31 +22,41 @@ assert.equal(
   "process.env.SECURE_KEY format invalid"
 );
 
-// new Provider instance with no extra configuration, will run in default, just needs the issuer
-// identifier, uses data from runtime-dyno-metadata heroku here
 const oidc = new Provider(
-  `https://${process.env.HEROKU_APP_NAME}.herokuapp.com`
+  `https://${process.env.HEROKU_APP_NAME}.herokuapp.com`,
+  {
+    // enable some of the feature, see the oidc-provider readme for more
+    formats: {
+      AccessToken: "jwt"
+    },
+    features: {
+      claimsParameter: true,
+      discovery: true,
+      encryption: true,
+      introspection: true,
+      registration: true,
+      request: true,
+      revocation: true,
+      sessionManagement: true
+    }
+  }
 );
 
-// initialize with no keystores, dev ones will be provided
+const keystore = require("./keystore.json");
+
 oidc
   .initialize({
-    // just a foobar client to be able to start an Authentication Request
+    keystore,
     clients: [
       {
         client_id: "foo",
         client_secret: "bar",
-        redirect_uris: ["https://peaceful-yonath-ac1071.netlify.com"]
+        redirect_uris: ["http://localhost:8080"]
       }
     ]
   })
   .then(() => {
-    // Heroku has a proxy in front that terminates ssl, you should trust the proxy.
     oidc.proxy = true;
-
-    // set the cookie signing keys (securekey plugin is taking care of those)
     oidc.keys = process.env.SECURE_KEY.split(",");
-
-    // listen on the heroku generated port
     oidc.listen(process.env.PORT);
   });
