@@ -34,7 +34,7 @@ oidc
       {
         client_id: "foo",
         client_secret: "bar",
-        redirect_uris: ["http://localhost:8080"]
+        redirect_uris: ["https://peaceful-yonath-ac1071.netlify.com"]
       }
     ]
   })
