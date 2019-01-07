@@ -1,43 +1,51 @@
-// see previous example for the things that are not commented
-
 const assert = require('assert');
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const Provider = require('oidc-provider');
+const helmet = require('helmet');
 
-// since dyno metadata is no longer available, we infer the app name from heroku remote we set
-// manually. This is not specific to oidc-provider, just an easy way of getting up and running
-if (!process.env.HEROKU_APP_NAME && process.env.X_HEROKU_REMOTE) {
-  process.env.X_HEROKU_REMOTE.match(/\.com\/(.+)\.git/);
-  process.env.HEROKU_APP_NAME = RegExp.$1;
+if (process.env.NODE_ENV === 'production') {
+  // since dyno metadata is no longer available, we infer the app name from heroku remote we set
+  // manually. This is not specific to oidc-provider, just an easy way of getting up and running
+  if (!process.env.HEROKU_APP_NAME && process.env.X_HEROKU_REMOTE) {
+    process.env.X_HEROKU_REMOTE.match(/\.com\/(.+)\.git/);
+    process.env.HEROKU_APP_NAME = RegExp.$1;
+  }
+  assert(
+    process.env.SECURE_KEY,
+    'process.env.SECURE_KEY missing, run `heroku addons:create securekey`',
+  );
+  assert.equal(
+    process.env.SECURE_KEY.split(',').length,
+    2,
+    'process.env.SECURE_KEY format invalid',
+  );
 }
-
-assert(process.env.HEROKU_APP_NAME, 'process.env.HEROKU_APP_NAME missing');
-assert(process.env.PORT, 'process.env.PORT missing');
-assert(
-  process.env.SECURE_KEY,
-  'process.env.SECURE_KEY missing, run `heroku addons:create securekey`',
-);
-assert.equal(
-  process.env.SECURE_KEY.split(',').length,
-  2,
-  'process.env.SECURE_KEY format invalid',
-);
 assert(
   process.env.REDIS_URL,
   'process.env.REDIS_URL missing, run `heroku-redis:hobby-dev`',
 );
 
-// require the redis adapter factory/class
+// set defaults for local usage
+const { PORT = 3000, ISSUER = 'http://redis_db:6739', TIMEOUT } = process.env;
+
 const RedisAdapter = require('./redis_adapter');
 
 // simple account model for this application, user list is defined like so
 const Account = require('./account');
 
 const oidc = new Provider(
-  `https://${process.env.HEROKU_APP_NAME}.herokuapp.com`,
+  ISSUER, //  `https://${process.env.HEROKU_APP_NAME}.herokuapp.com`,
   {
+    cookies: {
+      short: {
+        secure: true,
+      },
+      long: {
+        secure: true,
+      },
+    },
     // oidc-provider only looks up the accounts by their ID when it has to read the claims,
     // passing it our Account model method is sufficient, it should return a Promise that resolves
     // with an object with accountId property and a claims method.
@@ -77,6 +85,10 @@ const oidc = new Provider(
   },
 );
 
+if (TIMEOUT) {
+  oidc.defaultHttpOptions = { timeout: parseInt(TIMEOUT, 10) };
+}
+
 const keystore = require('./keystore.json');
 
 oidc
@@ -85,14 +97,13 @@ oidc
     clients: [
       // reconfigured the foo client for the purpose of showing the adapter working
       {
-        client_id: 'foo',
+        client_id: 'email-your-mp',
         redirect_uris: ['https://peaceful-yonath-ac1071.netlify.com'],
         response_types: ['id_token token'],
         grant_types: ['implicit'],
         token_endpoint_auth_method: 'none',
       },
     ],
-    // configure Provider to use the adapter
     adapter: RedisAdapter,
   })
   .then(() => {
@@ -100,15 +111,19 @@ oidc
     oidc.keys = process.env.SECURE_KEY.split(',');
   })
   .then(() => {
-    // let's work with express here, below is just the interaction definition
-    const expressApp = express();
-    expressApp.set('trust proxy', true);
-    expressApp.set('view engine', 'ejs');
-    expressApp.set('views', path.resolve(__dirname, 'views'));
+    const app = express();
+
+    // security
+    app.use(helmet());
+    app.set('trust proxy', true);
+
+    // UI
+    app.set('view engine', 'ejs');
+    app.set('views', path.resolve(__dirname, 'views'));
 
     const parse = bodyParser.urlencoded({ extended: false });
 
-    expressApp.get('/interaction/:grant', async (req, res) => {
+    app.get('/interaction/:grant', async (req, res) => {
       oidc.interactionDetails(req).then((details) => {
         console.log(
           'see what else is available to you for interaction views',
@@ -129,7 +144,7 @@ oidc
       });
     });
 
-    expressApp.post('/interaction/:grant/confirm', parse, (req, res) => {
+    app.post('/interaction/:grant/confirm', parse, (req, res) => {
       oidc.interactionFinished(req, res, {
         consent: {
           // TODO: add offline_access checkbox to confirm too
@@ -137,7 +152,7 @@ oidc
       });
     });
 
-    expressApp.post('/interaction/:grant/login', parse, (req, res, next) => {
+    app.post('/interaction/:grant/login', parse, (req, res, next) => {
       Account.authenticate(req.body.email, req.body.password)
         .then(account => oidc.interactionFinished(req, res, {
             login: {
@@ -153,8 +168,8 @@ oidc
     });
 
     // leave the rest of the requests to be handled by oidc-provider, there's a catch all 404 there
-    expressApp.use(oidc.callback);
+    app.use(oidc.callback);
 
     // express listen
-    expressApp.listen(process.env.PORT);
+    app.listen(process.env.PORT);
   });

@@ -36,6 +36,11 @@ class Account {
     assert(email, 'email must be provided');
     const lowercased = String(email).toLowerCase();
     const id = _.findKey(USERS, { email: lowercased });
+    if (id) {
+      console.log('id details:', id);
+    } else {
+      console.log('NO ID AVAILABLE');
+    }
     assert(id, 'invalid credentials provided');
 
     // this is usually a db lookup, so let's just wrap the thing in a promise
