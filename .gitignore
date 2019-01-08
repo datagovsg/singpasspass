@@ -36,3 +36,7 @@ npm-shrinkwrap.json
 
 # TODOs
 TODO.md
+
+# certificates and keys
+*.crt
+*.key

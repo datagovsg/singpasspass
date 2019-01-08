@@ -1,9 +1,12 @@
+const fs = require('fs');
+const https = require('https');
+const url = require('url');
 const assert = require('assert');
 const path = require('path');
 const express = require('express');
-const bodyParser = require('body-parser');
 const Provider = require('oidc-provider');
 const helmet = require('helmet');
+const routes = require('./routes');
 
 if (process.env.NODE_ENV === 'production') {
   // since dyno metadata is no longer available, we infer the app name from heroku remote we set
@@ -71,7 +74,7 @@ const oidc = new Provider(
     },
     features: {
       // disable the packaged interactions
-      devInteractions: false,
+      // devInteractions: false,
 
       claimsParameter: true,
       discovery: true,
@@ -97,7 +100,7 @@ oidc
     clients: [
       // reconfigured the foo client for the purpose of showing the adapter working
       {
-        client_id: 'email-your-mp',
+        client_id: 'foo',
         redirect_uris: ['https://peaceful-yonath-ac1071.netlify.com'],
         response_types: ['id_token token'],
         grant_types: ['implicit'],
@@ -121,55 +124,38 @@ oidc
     app.set('view engine', 'ejs');
     app.set('views', path.resolve(__dirname, 'views'));
 
-    const parse = bodyParser.urlencoded({ extended: false });
+    // HTTPS only
+    // app.use((req, res, next) => {
+    //   if (req.secure) {
+    //     next();
+    //   } else if (req.method === 'GET' || req.method === 'HEAD') {
+    //     res.redirect(
+    //       url.format({
+    //         protocol: 'https',
+    //         host: req.get('host'),
+    //         pathname: req.originalUrl,
+    //       }),
+    //     );
+    //   } else {
+    //     res.status(400).json({
+    //       error: 'invalid_request',
+    //       error_description: 'do yourself a favor and only use https',
+    //     });
+    //   }
+    // });
 
-    app.get('/interaction/:grant', async (req, res) => {
-      oidc.interactionDetails(req).then((details) => {
-        console.log(
-          'see what else is available to you for interaction views',
-          details,
-        );
-
-        const view = (() => {
-          switch (details.interaction.reason) {
-            case 'consent_prompt':
-            case 'client_not_authorized':
-              return 'interaction';
-            default:
-              return 'login';
-          }
-        })();
-
-        res.render(view, { details });
-      });
-    });
-
-    app.post('/interaction/:grant/confirm', parse, (req, res) => {
-      oidc.interactionFinished(req, res, {
-        consent: {
-          // TODO: add offline_access checkbox to confirm too
-        },
-      });
-    });
-
-    app.post('/interaction/:grant/login', parse, (req, res, next) => {
-      Account.authenticate(req.body.email, req.body.password)
-        .then(account => oidc.interactionFinished(req, res, {
-            login: {
-              account: account.accountId,
-              remember: !!req.body.remember,
-              ts: Math.floor(Date.now() / 1000),
-            },
-            consent: {
-              rejectedScopes: req.body.remember ? [] : ['offline_access'],
-            },
-          }),)
-        .catch(next);
-    });
-
+    routes(app, oidc);
     // leave the rest of the requests to be handled by oidc-provider, there's a catch all 404 there
     app.use(oidc.callback);
 
     // express listen
-    app.listen(process.env.PORT);
+    if (process.env.NODE_ENV === 'production') {
+      app.listen(PORT);
+    } else {
+      const certOptions = {
+        key: fs.readFileSync(path.resolve('server.key')),
+        cert: fs.readFileSync(path.resolve('server.crt')),
+      };
+      https.createServer(certOptions, app).listen(PORT);
+    }
   });
