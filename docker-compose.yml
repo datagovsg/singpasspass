@@ -2,7 +2,6 @@ version: "3"
 services:
   singpasspass:
     build: .
-    image: datagovsg/jarvis-ui:develop
     restart: always
     container_name: singpasspass
     depends_on:
