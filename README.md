@@ -7,8 +7,6 @@ attained by following [step by step instructions](https://github.com/panva/node-
 
 Note from the example:
 
-> Features such as sign-up, password resets and security measures like csrf, rate limiting, captcha - that's all on you and isn't a part of the protocol implementation provided by oidc-provider.
-
 Ignore the environments listed above, they're inaccurate. Code is deployed at:
 
 - code on `master` branch goes to singpass.herokuapp.com
