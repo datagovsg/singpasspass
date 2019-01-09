@@ -1,7 +1,6 @@
 const fs = require('fs');
 const https = require('https');
 const url = require('url');
-const assert = require('assert');
 const path = require('path');
 const express = require('express');
 const Provider = require('oidc-provider');
@@ -9,23 +8,7 @@ const helmet = require('helmet');
 const routes = require('./routes');
 
 // set defaults for local usage
-const { PORT = 3000, ISSUER = 'http://redis_db:6739', TIMEOUT } = process.env;
-
-if (process.env.NODE_ENV === 'production') {
-  assert(
-    process.env.SECURE_KEY,
-    'process.env.SECURE_KEY missing, run `heroku addons:create securekey`',
-  );
-  assert.equal(
-    process.env.SECURE_KEY.split(',').length,
-    2,
-    'process.env.SECURE_KEY format invalid',
-  );
-}
-assert(
-  process.env.REDIS_URL,
-  'process.env.REDIS_URL missing, run `heroku-redis:hobby-dev`',
-);
+const { PORT = 3000, ISSUER } = process.env;
 
 const RedisAdapter = require('./redis_adapter');
 
@@ -78,10 +61,6 @@ const oidc = new Provider(ISSUER, {
     sessionManagement: true,
   },
 });
-
-if (TIMEOUT) {
-  oidc.defaultHttpOptions = { timeout: parseInt(TIMEOUT, 10) };
-}
 
 const keystore = require('./keystore.json');
 
