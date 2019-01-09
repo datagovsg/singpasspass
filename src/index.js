@@ -119,24 +119,24 @@ oidc
     app.set('views', path.resolve(__dirname, 'views'));
 
     // HTTPS only
-    // app.use((req, res, next) => {
-    //   if (req.secure) {
-    //     next();
-    //   } else if (req.method === 'GET' || req.method === 'HEAD') {
-    //     res.redirect(
-    //       url.format({
-    //         protocol: 'https',
-    //         host: req.get('host'),
-    //         pathname: req.originalUrl,
-    //       }),
-    //     );
-    //   } else {
-    //     res.status(400).json({
-    //       error: 'invalid_request',
-    //       error_description: 'do yourself a favor and only use https',
-    //     });
-    //   }
-    // });
+    app.use((req, res, next) => {
+      if (req.secure) {
+        next();
+      } else if (req.method === 'GET' || req.method === 'HEAD') {
+        res.redirect(
+          url.format({
+            protocol: 'https',
+            host: req.get('host'),
+            pathname: req.originalUrl,
+          }),
+        );
+      } else {
+        res.status(400).json({
+          error: 'invalid_request',
+          error_description: 'do yourself a favor and only use https',
+        });
+      }
+    });
 
     routes(app, oidc);
     // leave the rest of the requests to be handled by oidc-provider, there's a catch all 404 there

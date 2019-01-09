@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "description": "Make SingPass Great Again",
-  "license": "MIT",
   "dependencies": {
     "body-parser": "^1.18.3",
     "ejs": "^2.6.1",
