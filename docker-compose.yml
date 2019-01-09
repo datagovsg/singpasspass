@@ -1,0 +1,23 @@
+version: "3"
+services:
+  singpasspass:
+    build: .
+    image: datagovsg/jarvis-ui:develop
+    restart: always
+    container_name: singpasspass
+    depends_on:
+      - redis_db
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis_db:6379
+      - SECURE_KEY=68AD7E79721A0C176FD8F2AE9B23750822779BEEC3203BCE98D9519453E23E98,C67C008201AD6EAD0BB27F1FE5EAD1E06D7786561CB056AB0123A8E17F99AAEF
+    volumes:
+      - ./src:/src
+  redis_db:
+    image: redis
+    container_name: redis_db
+    restart: always
+    ports:
+      - 6379:6379
