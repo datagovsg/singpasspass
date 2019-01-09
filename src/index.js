@@ -66,7 +66,7 @@ const oidc = new Provider(ISSUER, {
   },
   features: {
     // disable the packaged interactions
-    // devInteractions: false,
+    devInteractions: false,
 
     claimsParameter: true,
     discovery: true,
