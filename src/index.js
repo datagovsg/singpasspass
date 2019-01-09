@@ -8,7 +8,7 @@ const helmet = require('helmet');
 const routes = require('./routes');
 
 // set defaults for local usage
-const { PORT = 3000, ISSUER } = process.env;
+const { PORT, ISSUER, SECURE_KEY } = process.env;
 
 const RedisAdapter = require('./redis_adapter');
 
@@ -23,6 +23,7 @@ const oidc = new Provider(ISSUER, {
     long: {
       secure: true,
     },
+    keys: SECURE_KEY.split(','),
   },
   // oidc-provider only looks up the accounts by their ID when it has to read the claims,
   // passing it our Account model method is sufficient, it should return a Promise that resolves
@@ -84,7 +85,6 @@ oidc
   })
   .then(() => {
     oidc.proxy = true;
-    oidc.keys = process.env.SECURE_KEY.split(',');
   })
   .then(() => {
     const app = express();
