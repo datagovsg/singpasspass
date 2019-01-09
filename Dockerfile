@@ -1,6 +1,4 @@
-FROM node:10.11-alpine
-
-RUN apk update && apk upgrade
+FROM node:10
 
 COPY . .
 RUN npm install --info && npm cache clean -f && npm install -g nodemon
