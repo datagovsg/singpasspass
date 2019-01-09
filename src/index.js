@@ -130,5 +130,6 @@ oidc
         cert: fs.readFileSync(path.resolve('server.crt')),
       };
       https.createServer(certOptions, app).listen(PORT);
+      console.log('Development server is running on', PORT)
     }
   });
