@@ -75,9 +75,10 @@ oidc
         redirect_uris: [
           'https://peaceful-yonath-ac1071.netlify.com',
           'https://openidconnect.net/callback',
+          'https://lvh.me:3000/.well-known/openid-configuration',
         ],
-        response_types: ['id_token token'],
-        grant_types: ['implicit'],
+        response_types: ['code token id_token'],
+        grant_types: ['implicit', 'authorization_code'],
         token_endpoint_auth_method: 'none',
       },
     ],

@@ -20,4 +20,4 @@ To test, go to /auth?client_id=foo&response_type=id_token+token&scope=openid+ema
 
 To find out more information about what can or cannot be used, go to /.well-known/openid-configuration. It has all the information you need
 
-Test using https://openidconnect.net/ playground. Doesn't work on localhost, unfortunately
+Test using Postman
