@@ -76,6 +76,7 @@ oidc
           'https://peaceful-yonath-ac1071.netlify.com',
           'https://openidconnect.net/callback',
           'https://lvh.me:3000/.well-known/openid-configuration',
+          'https://open.gov.sg',
         ],
         response_types: ['code token id_token'],
         grant_types: ['implicit', 'authorization_code'],
