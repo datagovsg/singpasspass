@@ -78,7 +78,7 @@ oidc
           'https://lvh.me:3000/.well-known/openid-configuration',
           'https://open.gov.sg',
         ],
-        response_types: ['token id_token'],
+        response_types: ['id_token token'],
         grant_types: ['implicit'],
         token_endpoint_auth_method: 'none',
       },
